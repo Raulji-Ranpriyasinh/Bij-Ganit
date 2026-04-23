@@ -5,7 +5,7 @@ token is a standard short-lived access token that embeds the user's id in
 `sub` plus optional custom claims (currently unused).
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from jose import JWTError, jwt
@@ -29,13 +29,13 @@ def create_access_token(
     expires_minutes: int | None = None,
     extra_claims: dict[str, Any] | None = None,
 ) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(
+    expire = datetime.now(UTC) + timedelta(
         minutes=expires_minutes or settings.jwt_expire_minutes
     )
     to_encode: dict[str, Any] = {
         "sub": str(subject),
         "exp": expire,
-        "iat": datetime.now(timezone.utc),
+        "iat": datetime.now(UTC),
     }
     if extra_claims:
         to_encode.update(extra_claims)

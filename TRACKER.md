@@ -240,6 +240,80 @@ Where to look: `backend/app/api/v1/users.py`.
 
 ---
 
+## Sprint 2 — Customers + Items + Tax Types (Master Data)
+
+Shipped in `backend/alembic/versions/0002_sprint2_master_data.py` +
+`backend/app/{models,schemas,api/v1,seed_data}/...` +
+`frontend/src/pages/{customers,items}/`. Everything is company-scoped via
+the existing `Depends(get_current_company)` guard.
+
+What shipped:
+
+* **2.1 Lookup tables + seed data** — `currencies` (153 ISO 4217 rows) and
+  `countries` (246 ISO 3166 rows) seeded inside the Alembic migration via
+  `op.bulk_insert`. Source data lives in `app/seed_data/` so the same
+  list powers both the migration and the `GET /api/v1/{currencies,countries}`
+  endpoints.
+* **2.2 / 2.3 `customers` + `addresses`** — `Customer` (name, email, phone,
+  contact/company name, website, `enable_portal`, `password` nullable,
+  currency/company/creator FKs). `Address` keys to `customer_id` (+
+  `company_id`), with `type` enum `"billing"|"shipping"` and a
+  `country_id` FK. Addresses cascade-delete with their customer.
+* **2.4 Customer CRUD** — `GET/POST/PUT /api/v1/customers`,
+  `POST /api/v1/customers/delete`, `GET /api/v1/customers/{id}`,
+  `GET /api/v1/customers/{id}/stats`. List supports `search`
+  (name/contact_name/company_name ILIKE), `from_date`/`to_date`,
+  `order_by`/`order`. Create/update accept nested `billing` + `shipping`
+  address payloads.
+* **2.5 / 2.6 `items` + `units`** — `Item` has BigInt `price`,
+  `tax_per_item`, `unit_id`/`currency_id`/`company_id`/`creator_id`. Per-item
+  taxes live in the `taxes` table with `item_id` set. CRUD at
+  `/api/v1/items` (+ `/delete` bulk) and `/api/v1/units` (inline CRUD). Item
+  create/update replaces linked taxes atomically.
+* **2.7 / 2.8 `tax_types` + `taxes`** — `TaxType` has `percent` (numeric
+  5,2), `compound_tax`, `collective_tax`, `type`, `description`.
+  `Tax` has polymorphic nullable FKs — `item_id` is a real FK today,
+  `invoice_id`/`estimate_id` are plain nullable Integers until those tables
+  land in later sprints. CRUD at `/api/v1/tax-types` (+ `/delete`).
+* **2.9 / 2.10 React pages** — `CustomersListPage` + `CustomerFormPage`
+  (billing/shipping address sections, currency dropdown),
+  `ItemsListPage` + `ItemFormPage` (unit + currency dropdowns, tax type
+  checkboxes, currency-aware price formatting). List pages support search
+  + client-side pagination.
+* **2.11 Lookup endpoints** — `GET /api/v1/countries`, `/currencies`,
+  `/timezones`, `/date/formats`. Public (no auth) to mirror the reference
+  behaviour. Data served from `app/seed_data/`.
+
+Where to look:
+
+* Migration: `backend/alembic/versions/0002_sprint2_master_data.py`
+* Models: `backend/app/models/{currency,country,customer,address,unit,item,tax}.py`
+* Routes: `backend/app/api/v1/{customers,items,units,tax_types,lookups}.py`
+* Frontend: `frontend/src/pages/{customers,items}/` +
+  `frontend/src/types/masterData.ts`
+
+How to try it:
+
+```bash
+cd backend && source .venv/bin/activate
+pytest -q                             # 12 passing (4 sprint 1 + 8 sprint 2)
+alembic upgrade head                  # creates Sprint 2 tables + seeds
+```
+
+Notes for the next intern:
+
+* Invoice/estimate FKs on `taxes` are intentionally *not* enforced at the
+  DB level yet — add them in a follow-up migration once those tables land.
+* Customer passwords are hashed with the existing `hash_password` helper;
+  the portal login flow itself is Phase 11 work.
+* `CustomerStats` currently returns `total_customers` only. The
+  invoice/payment/due fields are exposed but return 0 until Sprint 4+.
+* `/api/v1/currencies` returns synthetic ids (index + 1) so the frontend
+  can key dropdowns — these match the auto-increment ids produced by
+  `bulk_insert` in Postgres.
+
+---
+
 ## Glossary / "Why did you do X?"
 
 * **Why async SQLAlchemy but sync Alembic?** Alembic's tooling is
@@ -265,7 +339,7 @@ Where to look: `backend/app/api/v1/users.py`.
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-pytest -q                       # 4 passing
+pytest -q                       # 12 passing
 
 # 2. Frontend deps + production build
 cd ../frontend
