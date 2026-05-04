@@ -4,6 +4,8 @@ import { RequireAuth } from "./components/RequireAuth";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
+import InvoicesListPage from "./pages/InvoicesListPage";
+import InvoiceFormPage from "./pages/InvoiceFormPage";
 import { CustomerFormPage } from "./pages/customers/CustomerFormPage";
 import { CustomersListPage } from "./pages/customers/CustomersListPage";
 import { ItemFormPage } from "./pages/items/ItemFormPage";
@@ -29,7 +31,9 @@ export default function App() {
           <Route path="/items" element={<ItemsListPage />} />
           <Route path="/items/new" element={<ItemFormPage />} />
           <Route path="/items/:id" element={<ItemFormPage />} />
-          <Route path="/invoices" element={<PlaceholderPage title="Invoices" />} />
+          <Route path="/invoices" element={<InvoicesListPage />} />
+          <Route path="/invoices/new" element={<InvoiceFormPage />} />
+          <Route path="/invoices/:id" element={<InvoiceFormPage />} />
           <Route path="/estimates" element={<PlaceholderPage title="Estimates" />} />
           <Route path="/expenses" element={<PlaceholderPage title="Expenses" />} />
           <Route path="/payments" element={<PlaceholderPage title="Payments" />} />

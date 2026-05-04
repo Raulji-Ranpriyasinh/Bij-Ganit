@@ -9,3 +9,6 @@ from app.models.item import Item  # noqa: F401
 from app.models.tax import Tax, TaxType  # noqa: F401
 from app.models.unit import Unit  # noqa: F401
 from app.models.user import User  # noqa: F401
+from app.models.invoice import Invoice, InvoiceItem  # noqa: F401
+from app.models.recurring import RecurringInvoice, RecurringInvoiceItem  # noqa: F401
+from app.models.custom_field import CustomField, CustomFieldValue  # noqa: F401

@@ -353,3 +353,50 @@ docker-compose up --build
 
 Then visit `http://localhost:5173` (frontend) and
 `http://localhost:8000/docs` (FastAPI Swagger).
+
+---
+
+## Sprint 3 — Invoices (Core feature)
+
+### 3.1-3.6 Invoices table, items, models, serials, hashids, create endpoint — DONE (initial)
+
+What shipped:
+
+* `backend/alembic/versions/0003_sprint3_invoices.py` — creates `invoices` and `invoice_items` tables.
+* `backend/app/models/invoice.py` — `Invoice` and `InvoiceItem` SQLAlchemy models with basic relationships to `items` and `taxes`.
+* `backend/app/services/serial_number.py` — simple serial-number formatter supporting `{{SERIES}}`, `{{DELIMITER}}`, `{{SEQUENCE:N}}`.
+* `backend/app/core/hashids.py` — deterministic `unique_hash` generator using `hashids` and app secret.
+* `backend/app/api/v1/invoices.py` — `POST /api/v1/invoices` endpoint to create an invoice with items and taxes, generate `invoice_number` and `unique_hash`.
+
+Where to look: `backend/app/models/invoice.py`, `backend/app/api/v1/invoices.py`, `backend/alembic/versions/0003_sprint3_invoices.py`.
+
+How to try it:
+
+```bash
+cd backend
+# ensure dependencies (added `hashids` to requirements)
+source .venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+Then POST a minimal invoice (authenticated request required) to `/api/v1/invoices` with a body like:
+
+```json
+{
+  "customer_id": 1,
+  "invoice_date": "2026-05-04",
+  "items": [
+    {"name": "Service A", "price": 10000, "quantity": 1}
+  ]
+}
+```
+
+Notes for the next intern:
+
+- This is an initial implementation focused on DB schema, models, and a basic create flow. Totals, discounts and tax calculations are intentionally simple and may need to be migrated to a shared `line_items` service for accuracy and re-use across Estimates/Invoices.
+- The serial-number generator reads a format string but `company_settings` are not yet implemented; the default format `{{SERIES:INV}}{{DELIMITER:-}}{{SEQUENCE:6}}` is used when none is provided.
+- `hashids` was added to `backend/requirements.txt` and `unique_hash` is generated after flush/commit.
+- Concurrency-safe sequencing is not implemented; consider a DB sequence or a dedicated `sequences` table for production.
+
