@@ -1,0 +1,132 @@
+{# Estimate Items Table Partial - Jinja2 Template #}
+<table width="100%" class="items-table" cellspacing="0" border="0">
+    <tr class="item-table-heading-row">
+        <th width="2%" class="pr-20 text-right item-table-heading">#</th>
+        <th width="40%" class="pl-0 text-left item-table-heading">Items</th>
+        {% for field in custom_fields %}
+            <th class="text-right item-table-heading">{{ field.label }}</th>
+        {% endfor %}
+        <th class="pr-20 text-right item-table-heading">Qty</th>
+        <th class="pr-20 text-right item-table-heading">Price</th>
+        {% if estimate.discount_per_item %}
+        <th class="pl-10 text-right item-table-heading">Discount</th>
+        {% endif %}
+        {% if estimate.tax_per_item %}
+        <th class="pl-10 text-right item-table-heading">Tax</th>
+        {% endif %}
+        <th class="text-right item-table-heading">Amount</th>
+    </tr>
+    {% set index = namespace(value=1) %}
+    {% for item in estimate.items %}
+        <tr class="item-row">
+            <td class="pr-20 text-right item-cell" style="vertical-align: top;">
+                {{ index.value }}
+            </td>
+            <td class="pl-0 text-left item-cell" style="vertical-align: top;">
+                <span>{{ item.name }}</span><br>
+                <span class="item-description">{{ item.description | replace('\n', '<br>') | safe }}</span>
+            </td>
+            {% for field in custom_fields %}
+                <td class="text-right item-cell" style="vertical-align: top;">
+                    {{ item.custom_fields.get(field.slug, '') }}
+                </td>
+            {% endfor %}
+            <td class="pr-20 text-right item-cell" style="vertical-align: top;">
+                {{ item.quantity }}{% if item.unit_name %} {{ item.unit_name }}{% endif %}
+            </td>
+            <td class="pr-20 text-right item-cell" style="vertical-align: top;">
+                {{ format_currency(item.price, currency_code) }}
+            </td>
+
+            {% if estimate.discount_per_item %}
+                <td class="pl-10 text-right item-cell" style="vertical-align: top;">
+                    {% if item.discount_type == 'fixed' %}
+                        {{ format_currency(item.discount_val, currency_code) }}
+                    {% endif %}
+                    {% if item.discount_type == 'percentage' %}
+                        {{ item.discount }}%
+                    {% endif %}
+                </td>
+            {% endif %}
+
+            {% if estimate.tax_per_item %}
+                <td class="pl-10 text-right item-cell" style="vertical-align: top;">
+                    {{ format_currency(item.tax, currency_code) }}
+                </td>
+            {% endif %}
+
+            <td class="text-right item-cell" style="vertical-align: top;">
+                {{ format_currency(item.total, currency_code) }}
+            </td>
+        </tr>
+        {% set index.value = index.value + 1 %}
+    {% endfor %}
+</table>
+
+<hr class="item-cell-table-hr">
+
+<div class="total-display-container">
+    <table width="100%" cellspacing="0px" border="0" class="total-display-table {% if estimate.items | length > 12 %}page-break{% endif %}">
+        <tr>
+            <td class="border-0 total-table-attribute-label">Subtotal</td>
+            <td class="py-2 border-0 item-cell total-table-attribute-value">
+                {{ format_currency(estimate.sub_total, currency_code) }}
+            </td>
+        </tr>
+
+        {% if estimate.discount > 0 %}
+            {% if not estimate.discount_per_item %}
+                <tr>
+                    <td class="border-0 total-table-attribute-label">
+                        {% if estimate.discount_type == 'fixed' %}
+                            Discount
+                        {% endif %}
+                        {% if estimate.discount_type == 'percentage' %}
+                            Discount ({{ estimate.discount }}%)
+                        {% endif %}
+                    </td>
+                    <td class="py-2 border-0 item-cell total-table-attribute-value">
+                        {{ format_currency(estimate.discount_val, currency_code) }}
+                    </td>
+                </tr>
+            {% endif %}
+        {% endif %}
+
+        {% if estimate.tax_per_item %}
+            {% for tax in taxes %}
+                <tr>
+                    <td class="border-0 total-table-attribute-label">
+                        {{ tax.name }} ({{ tax.percent }}%)
+                    </td>
+                    <td class="py-2 border-0 item-cell total-table-attribute-value">
+                        {{ format_currency(tax.amount, currency_code) }}
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            {% for tax in estimate.taxes %}
+                <tr>
+                    <td class="border-0 total-table-attribute-label">
+                        {{ tax.name }} ({{ tax.percent }}%)
+                    </td>
+                    <td class="py-2 border-0 item-cell total-table-attribute-value">
+                        {{ format_currency(tax.amount, currency_code) }}
+                    </td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+
+        <tr>
+            <td class="py-3"></td>
+            <td class="py-3"></td>
+        </tr>
+        <tr>
+            <td class="border-0 total-border-left total-table-attribute-label">
+                Total
+            </td>
+            <td class="py-8 border-0 total-border-right item-cell total-table-attribute-value" style="color: #5851D8;">
+                {{ format_currency(estimate.total, currency_code) }}
+            </td>
+        </tr>
+    </table>
+</div>

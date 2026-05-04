@@ -1,0 +1,44 @@
+{# Payment Items Table Partial - Jinja2 Template #}
+<table width="100%" class="items-table" cellspacing="0" border="0">
+    <tr class="item-table-heading-row">
+        <th width="5%" class="pr-20 text-right item-table-heading">#</th>
+        <th width="35%" class="pl-0 text-left item-table-heading">Invoice</th>
+        <th width="20%" class="text-right item-table-heading">Payment Date</th>
+        <th width="20%" class="pr-20 text-right item-table-heading">Payment Method</th>
+        <th class="text-right item-table-heading">Amount</th>
+    </tr>
+    {% set index = namespace(value=1) %}
+    {% for invoice_payment in payment.invoice_payments %}
+        <tr class="item-row">
+            <td class="pr-20 text-right item-cell" style="vertical-align: top;">
+                {{ index.value }}
+            </td>
+            <td class="pl-0 text-left item-cell" style="vertical-align: top;">
+                <span>{{ invoice_payment.invoice.invoice_number }}</span><br>
+            </td>
+            <td class="text-right item-cell" style="vertical-align: top;">
+                {{ invoice_payment.payment.formatted_payment_date }}
+            </td>
+            <td class="pr-20 text-right item-cell" style="vertical-align: top;">
+                {{ invoice_payment.payment.payment_method }}
+            </td>
+            <td class="text-right item-cell" style="vertical-align: top;">
+                {{ format_currency(invoice_payment.amount, currency_code) }}
+            </td>
+        </tr>
+        {% set index.value = index.value + 1 %}
+    {% endfor %}
+</table>
+
+<hr class="item-cell-table-hr">
+
+<div class="total-display-container">
+    <table width="100%" cellspacing="0px" border="0" class="total-display-table">
+        <tr>
+            <td class="border-0 total-table-attribute-label">Total Paid</td>
+            <td class="py-2 border-0 item-cell total-table-attribute-value">
+                {{ format_currency(payment.total_amount, currency_code) }}
+            </td>
+        </tr>
+    </table>
+</div>

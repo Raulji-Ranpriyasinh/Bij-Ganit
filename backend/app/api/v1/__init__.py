@@ -16,6 +16,7 @@ from app.api.v1 import (
     dashboard,
     cron,
     custom_fields,
+    pdf,
 )
 
 api_v1_router = APIRouter(prefix="/v1")
@@ -35,3 +36,4 @@ api_v1_router.include_router(lookups.router)
 api_v1_router.include_router(dashboard.router)
 api_v1_router.include_router(cron.router)
 api_v1_router.include_router(custom_fields.router)
+api_v1_router.include_router(pdf.router)
