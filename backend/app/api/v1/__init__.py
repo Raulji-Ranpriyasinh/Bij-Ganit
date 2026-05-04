@@ -16,7 +16,9 @@ from app.api.v1 import (
     dashboard,
     cron,
     custom_fields,
+    send,
 )
+from app.api.v1.pdf import pdf_endpoints
 
 api_v1_router = APIRouter(prefix="/v1")
 api_v1_router.include_router(auth.router)
@@ -35,3 +37,5 @@ api_v1_router.include_router(lookups.router)
 api_v1_router.include_router(dashboard.router)
 api_v1_router.include_router(cron.router)
 api_v1_router.include_router(custom_fields.router)
+api_v1_router.include_router(send.router)
+api_v1_router.include_router(pdf_endpoints.router)

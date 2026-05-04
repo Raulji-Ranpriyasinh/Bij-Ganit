@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Receipt {{ payment.payment_number }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #333; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .company-info { width: 50%; }
+        .company-logo { max-width: 200px; max-height: 80px; margin-bottom: 10px; }
+        .payment-info { width: 45%; text-align: right; }
+        .payment-title { font-size: 24px; font-weight: bold; color: #3498db; margin-bottom: 10px; }
+        .info-row { margin-bottom: 5px; }
+        .label { font-weight: bold; color: #666; }
+        .addresses { display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .address-box { width: 48%; }
+        .address-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 10px; text-transform: uppercase; }
+        .payment-details { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .payment-amount { font-size: 32px; font-weight: bold; color: #3498db; text-align: center; margin: 20px 0; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .items-table th { background-color: #f5f5f5; padding: 10px 8px; text-align: left; font-weight: bold; border-bottom: 2px solid #ddd; }
+        .items-table td { padding: 10px 8px; border-bottom: 1px solid #eee; }
+        .summary-section { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+        .summary-table { width: 40%; border-collapse: collapse; }
+        .summary-table td { padding: 8px; border-bottom: 1px solid #eee; }
+        .summary-table .label { text-align: right; padding-right: 15px; }
+        .summary-table .value { text-align: right; font-weight: bold; }
+        .summary-table .total-row { background-color: #3498db; color: white; font-size: 14px; }
+        .summary-table .total-row .label { color: white; }
+        .notes-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+        .notes-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
+        .notes-content { color: #666; white-space: pre-wrap; }
+        .success-badge { background-color: #27ae60; color: white; padding: 5px 15px; border-radius: 20px; display: inline-block; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-info">
+            {% if company.logo %}<img src="{{ company.logo }}" alt="Company Logo" class="company-logo">{% endif %}
+            <div><strong>{{ company.name }}</strong></div>
+            <div>{{ company.address.street }}</div>
+            <div>{{ company.address.city }}, {{ company.address.state }} {{ company.address.zip }}</div>
+            <div>{{ company.address.country }}</div>
+            {% if company.email %}<div>Email: {{ company.email }}</div>{% endif %}
+            {% if company.phone %}<div>Phone: {{ company.phone }}</div>{% endif %}
+        </div>
+        <div class="payment-info">
+            <div class="payment-title">PAYMENT RECEIPT</div>
+            <div class="info-row"><span class="label">Payment #:</span> {{ payment.payment_number }}</div>
+            <div class="info-row"><span class="label">Date:</span> {{ payment.payment_date.strftime('%Y-%m-%d') if payment.payment_date else '' }}</div>
+            {% if payment.invoice %}
+            <div class="info-row"><span class="label">Invoice #:</span> {{ payment.invoice.invoice_number }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="addresses">
+        <div class="address-box">
+            <div class="address-title">Received From</div>
+            <div><strong>{{ customer.name }}</strong></div>
+            <div>{{ customer.billing_address.street if customer.billing_address else '' }}</div>
+            <div>{{ customer.billing_address.city if customer.billing_address else '' }}, {{ customer.billing_address.state if customer.billing_address else '' }} {{ customer.billing_address.zip if customer.billing_address else '' }}</div>
+            <div>{{ customer.billing_address.country if customer.billing_address else '' }}</div>
+        </div>
+        <div class="address-box">
+            <div class="address-title">Payment Method</div>
+            <div><strong>{{ payment_method.name if payment_method else 'N/A' }}</strong></div>
+            {% if payment_method and payment_method.type %}
+            <div>Type: {{ payment_method.type }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="payment-details">
+        <div style="text-align: center; color: #666;">Amount Paid</div>
+        <div class="payment-amount">{{ "%.2f"|format(payment.amount / 100) }}</div>
+        <div class="success-badge">✓ Payment Received</div>
+    </div>
+
+    {% if payment.notes %}
+    <div class="notes-section">
+        <div class="notes-title">Notes</div>
+        <div class="notes-content">{{ payment.notes }}</div>
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 11px;">
+        Thank you for your payment!
+    </div>
+</body>
+</html>

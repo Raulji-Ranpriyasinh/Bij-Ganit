@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Estimate {{ estimate_number }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f5f5f5; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .logo { max-width: 150px; margin-bottom: 10px; }
+        .content { padding: 20px 0; }
+        .estimate-details { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .amount { font-size: 24px; font-weight: bold; color: #27ae60; }
+        .button { display: inline-block; padding: 12px 30px; background-color: #27ae60; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #999; font-size: 12px; }
+        .expiry-notice { background-color: #fff3cd; padding: 10px; border-radius: 5px; margin: 15px 0; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            {% if company_logo %}
+            <img src="{{ company_logo }}" alt="Company Logo" class="logo">
+            {% endif %}
+            <h1>Estimate {{ estimate_number }}</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{ customer_name }},</p>
+            
+            <p>Please find attached estimate <strong>{{ estimate_number }}</strong> for the amount of <span class="amount">${{ "%.2f"|format(amount) }}</span>.</p>
+            
+            <div class="estimate-details">
+                <p><strong>Estimate Number:</strong> {{ estimate_number }}</p>
+                <p><strong>Estimated Amount:</strong> ${{ "%.2f"|format(amount) }}</p>
+                {% if expiry_date %}
+                <p><strong>Valid Until:</strong> {{ expiry_date }}</p>
+                {% endif %}
+            </div>
+            
+            {% if expiry_date %}
+            <div class="expiry-notice">
+                <strong>Note:</strong> This estimate is valid until {{ expiry_date }}.
+            </div>
+            {% endif %}
+            
+            {% if pdf_link %}
+            <p style="text-align: center;">
+                <a href="{{ pdf_link }}" class="button">View Estimate</a>
+            </p>
+            {% endif %}
+            
+            <p>If you have any questions or would like to proceed with this estimate, please don't hesitate to contact us.</p>
+            
+            <p>Best regards,<br>{{ company_name }}</p>
+        </div>
+        
+        <div class="footer">
+            <p>{{ company_address }}</p>
+            <p>This is an automated message. Please do not reply directly to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
