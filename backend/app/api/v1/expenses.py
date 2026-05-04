@@ -13,9 +13,10 @@ from app.models.user import User
 from app.schemas.expense import ExpenseCreate, ExpenseOut, ExpenseCategoryCreate, ExpenseCategoryOut
 
 router = APIRouter(prefix="/expenses", tags=["expenses"])
+categories_router = APIRouter(prefix="/categories", tags=["expense-categories"])
 
 
-# ── Expense Categories ────────────────────────────────────────────────────────
+# ── Expense Categories (on /expenses/categories) ──────────────────────────────
 
 @router.get("/categories", response_model=list[ExpenseCategoryOut])
 async def list_categories(
@@ -76,7 +77,7 @@ async def delete_category(
 
 # ── Expenses ──────────────────────────────────────────────────────────────────
 
-@router.post("/expenses", response_model=ExpenseOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ExpenseOut, status_code=status.HTTP_201_CREATED)
 async def create_expense(
     payload: ExpenseCreate,
     db: AsyncSession = Depends(get_db),
@@ -98,7 +99,7 @@ async def create_expense(
     return exp
 
 
-@router.get("/expenses")
+@router.get("", )
 async def list_expenses(
     db: AsyncSession = Depends(get_db),
     company: Company = Depends(get_current_company),
@@ -108,7 +109,7 @@ async def list_expenses(
     return {"items": list(res.all())}
 
 
-@router.get("/expenses/{expense_id}", response_model=ExpenseOut)
+@router.get("/{expense_id}", response_model=ExpenseOut)
 async def get_expense(
     expense_id: int,
     db: AsyncSession = Depends(get_db),
@@ -120,11 +121,11 @@ async def get_expense(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
     return e
 
-    categories_router = APIRouter(prefix="/categories", tags=["expense-categories"])
 
+# ── categories_router (mounted at /categories in __init__.py) ─────────────────
 
-@categories_router.get("", )
-async def list_categories(
+@categories_router.get("")
+async def list_categories_root(
     db: AsyncSession = Depends(get_db),
     company: Company = Depends(get_current_company),
     _: User = Depends(get_current_user),
@@ -134,15 +135,15 @@ async def list_categories(
 
 
 @categories_router.post("", status_code=status.HTTP_201_CREATED)
-async def create_category(
-    payload: dict,
+async def create_category_root(
+    payload: ExpenseCategoryCreate,
     db: AsyncSession = Depends(get_db),
     company: Company = Depends(get_current_company),
     _: User = Depends(get_current_user),
 ):
     cat = ExpenseCategory(
-        name=payload["name"],
-        description=payload.get("description"),
+        name=payload.name,
+        description=payload.description,
         company_id=company.id,
     )
     db.add(cat)
@@ -152,9 +153,9 @@ async def create_category(
 
 
 @categories_router.put("/{category_id}")
-async def update_category(
+async def update_category_root(
     category_id: int,
-    payload: dict,
+    payload: ExpenseCategoryCreate,
     db: AsyncSession = Depends(get_db),
     company: Company = Depends(get_current_company),
     _: User = Depends(get_current_user),
@@ -162,15 +163,15 @@ async def update_category(
     cat = await db.get(ExpenseCategory, category_id)
     if not cat or cat.company_id != company.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
-    cat.name = payload.get("name", cat.name)
-    cat.description = payload.get("description", cat.description)
+    cat.name = payload.name
+    cat.description = payload.description
     await db.commit()
     await db.refresh(cat)
     return cat
 
 
 @categories_router.delete("/{category_id}")
-async def delete_category(
+async def delete_category_root(
     category_id: int,
     db: AsyncSession = Depends(get_db),
     company: Company = Depends(get_current_company),

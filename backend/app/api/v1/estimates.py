@@ -15,6 +15,7 @@ from app.schemas.estimate import EstimateCreate, EstimateOut, EstimateItemInput
 from app.services.serial_number import generate_invoice_number
 from app.core.hashids import encode_id
 from app.models.invoice import Invoice, InvoiceItem
+from app.schemas.invoice import InvoiceOut
 
 router = APIRouter(prefix="/estimates", tags=["estimates"]) 
 
@@ -124,8 +125,8 @@ async def bulk_delete_estimates(
     await db.commit()
     return {"success": True}
 
+@router.post("/{estimate_id}/convert-to-invoice", response_model=InvoiceOut)
 
-@router.post("/{estimate_id}/convert-to-invoice", response_model=Invoice)
 async def convert_estimate_to_invoice(
     estimate_id: int,
     db: AsyncSession = Depends(get_db),

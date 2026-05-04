@@ -222,8 +222,7 @@ async def update_invoice(
     return invoice
 
 
-
-@router.get("")
+@router.get("", response_model=None)
 async def list_invoices(
     search: str | None = Query(default=None),
     status_filter: str | None = Query(default=None, alias="status"),
