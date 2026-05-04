@@ -12,3 +12,5 @@ from app.models.user import User  # noqa: F401
 from app.models.invoice import Invoice, InvoiceItem  # noqa: F401
 from app.models.recurring import RecurringInvoice, RecurringInvoiceItem  # noqa: F401
 from app.models.custom_field import CustomField, CustomFieldValue  # noqa: F401
+from app.models.finance import Estimate, EstimateItem, Payment, PaymentMethod, Expense, ExpenseCategory  # noqa: F401
+from app.models.email_log import EmailLog  # noqa: F401
