@@ -14,7 +14,19 @@ from app.models.invoice import Invoice
 from app.schemas.payment import PaymentCreate, PaymentOut
 from app.core.hashids import encode_id
 
-router = APIRouter(prefix="/payments", tags=["payments"]) 
+router = APIRouter(prefix="/payments", tags=["payments"])
+
+
+def _update_invoice_due(inv: Invoice, amount_delta: int) -> None:
+    """Add amount_delta to invoice due_amount and recalculate paid_status."""
+    inv.due_amount = max(0, (inv.due_amount or 0) + amount_delta)
+    total = inv.total or 0
+    if inv.due_amount <= 0 and total > 0:
+        inv.paid_status = "PAID"
+    elif inv.due_amount < total:
+        inv.paid_status = "PARTIALLY_PAID"
+    else:
+        inv.paid_status = "UNPAID"
 
 
 @router.post("", response_model=PaymentOut, status_code=status.HTTP_201_CREATED)
@@ -37,22 +49,77 @@ async def create_payment(
     await db.flush()
     payment.unique_hash = encode_id("payment", payment.id)
 
-    # if attached to invoice, adjust invoice due_amount
     if payload.invoice_id:
         inv = await db.get(Invoice, payload.invoice_id)
         if not inv or inv.company_id != company.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found")
-        inv.due_amount = max(0, (inv.due_amount or inv.total or 0) - payload.amount)
-        if inv.due_amount <= 0 and (inv.total or 0) > 0:
-            inv.paid_status = "PAID"
-        elif inv.due_amount < (inv.total or 0):
-            inv.paid_status = "PARTIALLY_PAID"
-        else:
-            inv.paid_status = "UNPAID"
+        _update_invoice_due(inv, -payload.amount)
 
     await db.commit()
     await db.refresh(payment)
     return payment
+
+
+@router.put("/{payment_id}", response_model=PaymentOut)
+async def update_payment(
+    payment_id: int,
+    payload: PaymentCreate,
+    db: AsyncSession = Depends(get_db),
+    company: Company = Depends(get_current_company),
+    current_user: User = Depends(get_current_user),
+) -> Payment:
+    payment = await db.get(Payment, payment_id)
+    if not payment or payment.company_id != company.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
+
+    old_invoice_id = payment.invoice_id
+    old_amount = payment.amount
+
+    # Case 1 & 2: had an old invoice — restore its due_amount
+    if old_invoice_id:
+        old_inv = await db.get(Invoice, old_invoice_id)
+        if old_inv and old_inv.company_id == company.id:
+            _update_invoice_due(old_inv, old_amount)
+
+    # Apply new values
+    payment.amount = payload.amount
+    payment.payment_date = payload.payment_date
+    payment.notes = payload.notes
+    payment.payment_method_id = payload.payment_method_id
+    payment.invoice_id = payload.invoice_id
+
+    # Case 1: invoice changed OR Case 3: same invoice — subtract new amount
+    if payload.invoice_id:
+        new_inv = await db.get(Invoice, payload.invoice_id)
+        if not new_inv or new_inv.company_id != company.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found")
+        _update_invoice_due(new_inv, -payload.amount)
+
+    await db.commit()
+    await db.refresh(payment)
+    return payment
+
+
+@router.post("/delete")
+async def delete_payments(
+    ids: list[int],
+    db: AsyncSession = Depends(get_db),
+    company: Company = Depends(get_current_company),
+    _: User = Depends(get_current_user),
+) -> dict[str, bool]:
+    if not ids:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No ids provided")
+    result = await db.scalars(
+        select(Payment).where(Payment.id.in_(ids), Payment.company_id == company.id)
+    )
+    for p in result.all():
+        if p.invoice_id:
+            inv = await db.get(Invoice, p.invoice_id)
+            if inv and inv.company_id == company.id:
+                _update_invoice_due(inv, p.amount)
+        await db.delete(p)
+    await db.commit()
+    return {"success": True}
 
 
 @router.get("/{payment_id}", response_model=PaymentOut)

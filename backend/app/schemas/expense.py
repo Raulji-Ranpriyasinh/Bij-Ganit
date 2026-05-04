@@ -1,8 +1,24 @@
-"""Schemas for Expenses (Sprint 4).
+"""Schemas for Expenses + Expense Categories (Sprint 4).
 """
 
 from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict
+
+
+class ExpenseCategoryCreate(BaseModel):
+    name: str
+    description: str | None = None
+
+
+class ExpenseCategoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: str | None = None
+    company_id: int | None = None
+    created_at: datetime
+    updated_at: datetime
 
 
 class ExpenseCreate(BaseModel):

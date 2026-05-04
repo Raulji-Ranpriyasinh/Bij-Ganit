@@ -78,13 +78,24 @@ DEFAULT_COMPANY_SETTINGS: dict[str, str] = {
 }
 
 
-async def setup_default_data(db: AsyncSession, company: Company) -> None:
-    """Seed a freshly-created company with its defaults.
+# async def setup_default_data(db: AsyncSession, company: Company) -> None:
+#     """Seed a freshly-created company with its defaults.
 
-    In this sprint the target tables (payment_methods, units, company_settings)
-    do not exist yet, so this is a safe no-op that later sprints will flesh
-    out.  It is still called from the `POST /companies` endpoint so the call
-    site is stable and tests can assert it is invoked.
-    """
-    # Intentional no-op — see docstring.
-    _ = (db, company, DEFAULT_PAYMENT_METHODS, DEFAULT_UNITS, DEFAULT_COMPANY_SETTINGS)
+#     In this sprint the target tables (payment_methods, units, company_settings)
+#     do not exist yet, so this is a safe no-op that later sprints will flesh
+#     out.  It is still called from the `POST /companies` endpoint so the call
+#     site is stable and tests can assert it is invoked.
+#     """
+#     # Intentional no-op — see docstring.
+#     _ = (db, company, DEFAULT_PAYMENT_METHODS, DEFAULT_UNITS, DEFAULT_COMPANY_SETTINGS)
+
+async def setup_default_data(db: AsyncSession, company: Company) -> None:
+    """Seed a freshly-created company with its defaults."""
+    from app.models.finance import PaymentMethod
+    from app.models.unit import Unit
+
+    for method_name in DEFAULT_PAYMENT_METHODS:
+        db.add(PaymentMethod(name=method_name, company_id=company.id))
+
+    for unit_name in DEFAULT_UNITS:
+        db.add(Unit(name=unit_name, company_id=company.id))

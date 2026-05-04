@@ -114,7 +114,13 @@ async def create_invoice(
     await db.refresh(invoice)
     return invoice
 
-
+@router.get("/templates")
+async def invoice_templates() -> list[dict]:
+    # static list for now
+    return [
+        {"name": "default", "preview": "/static/templates/default.png"},
+        {"name": "modern", "preview": "/static/templates/modern.png"},
+    ]
 
 @router.put("/{invoice_id}", response_model=InvoiceOut)
 async def update_invoice(
@@ -396,12 +402,3 @@ async def clone_invoice(
     await db.refresh(new)
     return new
 
-
-
-@router.get("/templates")
-async def invoice_templates() -> list[dict]:
-    # static list for now
-    return [
-        {"name": "default", "preview": "/static/templates/default.png"},
-        {"name": "modern", "preview": "/static/templates/modern.png"},
-    ]
